@@ -1,100 +1,111 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>智能办公空间 · 3D 可视化</title>
+<title>Smart Railway Station · 3D Digital Twin</title>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
-  body { overflow:hidden; background:#eef1f5; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; }
-  #info {
-    position:absolute; top:20px; left:50%; transform:translateX(-50%);
-    color:#1a1a2e; font-size:20px; font-weight:700;
-    background:rgba(255,255,255,0.92); padding:10px 26px; border-radius:10px;
+  body { overflow:hidden; background:#1a1a2e; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; }
+
+  #title {
+    position:absolute; top:18px; left:50%; transform:translateX(-50%);
+    color:#e8eaed; font-size:18px; font-weight:700; letter-spacing:0.5px;
+    background:rgba(26,26,46,0.85); padding:9px 22px; border-radius:8px;
     pointer-events:none; backdrop-filter:blur(12px);
-    border:1px solid rgba(0,0,0,0.06); box-shadow:0 2px 12px rgba(0,0,0,0.05);
+    border:1px solid rgba(255,255,255,0.08);
   }
+  #title span { color:#8ab4f8; }
+
   .hint {
-    position:absolute; bottom:30px; left:50%; transform:translateX(-50%);
-    color:#8f959e; font-size:12px; pointer-events:none;
+    position:absolute; bottom:22px; left:50%; transform:translateX(-50%);
+    color:rgba(255,255,255,0.35); font-size:11px; pointer-events:none;
+    letter-spacing:0.3px;
   }
+
   @keyframes pulse {
-    0%,100% { opacity:1; }
-    50% { opacity:0.35; }
+    0%,100% { opacity:1; transform:scale(1); }
+    50% { opacity:0.4; transform:scale(1.3); }
   }
-  @keyframes float {
-    0%,100% { transform:translateY(0); }
-    50% { transform:translateY(-5px); }
+  @keyframes floatUp {
+    0%,100% { transform:translateY(0); opacity:0.8; }
+    50% { transform:translateY(-8px); opacity:1; }
+  }
+  @keyframes trainMove {
+    0% { transform:translateX(-4px); }
+    100% { transform:translateX(4px); }
   }
 
   /* Side Panels */
   .side-panel {
-    position:absolute; top:100px; bottom:30px; width:250px;
-    background:rgba(255,255,255,0.92); backdrop-filter:blur(16px);
-    border:1px solid rgba(0,0,0,0.06); border-radius:14px;
+    position:absolute; top:100px; bottom:30px; width:240px;
+    background:rgba(26,26,46,0.88); backdrop-filter:blur(16px);
+    border:1px solid rgba(255,255,255,0.06); border-radius:12px;
     padding:0; display:flex; flex-direction:column;
     z-index:10; overflow:hidden;
-    box-shadow:0 4px 20px rgba(0,0,0,0.05);
   }
-  .panel-left { left:16px; }
-  .panel-right { right:16px; }
+  .panel-left { left:14px; }
+  .panel-right { right:14px; }
 
   .panel-header {
-    padding:14px 16px 12px;
-    font-size:14px; font-weight:700;
-    border-bottom:1px solid rgba(0,0,0,0.06);
-    display:flex; align-items:center; gap:8px;
+    padding:13px 14px 11px;
+    font-size:13px; font-weight:700; color:#e8eaed;
+    border-bottom:1px solid rgba(255,255,255,0.06);
+    display:flex; align-items:center; gap:7px; letter-spacing:0.3px;
   }
-  .panel-left .panel-header { color:#3370ff; }
-  .panel-right .panel-header { color:#f54a45; }
+  .panel-header .dot { width:8px; height:8px; border-radius:50%; }
+  .dot.green { background:#34a853; box-shadow:0 0 8px #34a85388; }
+  .dot.amber { background:#fbbc04; box-shadow:0 0 8px #fbbc0488; }
+  .dot.red { background:#ea4335; box-shadow:0 0 8px #ea433588; animation:pulse 2s infinite; }
 
-  .panel-list {
-    flex:1; overflow-y:auto; padding:8px;
-  }
+  .panel-list { flex:1; overflow-y:auto; padding:6px; }
+  .panel-list::-webkit-scrollbar { width:4px; }
+  .panel-list::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.08); border-radius:2px; }
+
   .panel-item {
-    padding:10px 12px; margin:4px 0; border-radius:8px;
-    cursor:pointer; font-size:12px; display:flex; align-items:center; gap:8px;
-    transition:background 0.2s;
+    padding:9px 11px; margin:3px 0; border-radius:7px;
+    cursor:pointer; font-size:11px; display:flex; align-items:center; gap:8px;
+    transition:background 0.2s; color:#c4c7cc;
   }
-  .panel-item:hover { background:#f0f4ff; }
-  .panel-item.active { background:#e8f0ff; }
+  .panel-item:hover { background:rgba(138,180,248,0.08); }
+  .panel-item.active { background:rgba(138,180,248,0.14); border-left:2px solid #8ab4f8; }
 
   .dev-icon {
-    width:28px; height:28px; border-radius:6px;
-    display:flex; align-items:center; justify-content:center;
-    font-size:14px; flex-shrink:0;
+    width:26px; height:26px; border-radius:6px; font-size:13px;
+    display:flex; align-items:center; justify-content:center; flex-shrink:0;
   }
   .dev-info { flex:1; min-width:0; }
-  .dev-name { font-weight:600; color:#1a1a2e; }
-  .dev-zone { font-size:10px; color:#8f959e; }
-  .dev-status { font-size:10px; padding:2px 6px; border-radius:3px; font-weight:500; white-space:nowrap; }
-  .status-ok { background:#e8f5e9; color:#2e7d32; }
-  .status-warn { background:#fff3e0; color:#e65100; }
-  .status-off { background:#f5f5f5; color:#9e9e9e; }
+  .dev-name { font-weight:600; color:#e8eaed; }
+  .dev-loc { font-size:10px; color:rgba(255,255,255,0.35); }
+  .dev-badge { font-size:9px; padding:2px 6px; border-radius:3px; font-weight:600; white-space:nowrap; }
+  .badge-ok { background:rgba(52,168,83,0.15); color:#34a853; }
+  .badge-warn { background:rgba(251,188,4,0.15); color:#fbbc04; }
+  .badge-alert { background:rgba(234,67,53,0.15); color:#ea4335; }
 
-  .alarm-item {
-    padding:10px 12px; margin:4px 0; border-radius:8px;
-    font-size:11px; background:#fff5f5; border-left:3px solid #f54a45;
-    display:flex; justify-content:space-between; align-items:center;
+  .alarm-row {
+    padding:8px 11px; margin:3px 0; border-radius:7px;
+    font-size:10px; background:rgba(234,67,53,0.06);
+    border-left:2px solid rgba(234,67,53,0.5);
+    display:flex; justify-content:space-between; align-items:center; color:#c4c7cc;
   }
-  .alarm-time { color:#8f959e; font-size:10px; white-space:nowrap; }
+  .alarm-time { color:rgba(255,255,255,0.25); font-size:9px; white-space:nowrap; }
 </style>
 </head>
 <body>
 
-<div id="info">🏢 智能办公空间 · 3D 可视化</div>
+<div id="title">🚉 <span>Central Station</span> · Digital Twin</div>
 
 <div class="side-panel panel-left">
-  <div class="panel-header">📡 设备列表</div>
+  <div class="panel-header"><span class="dot green"></span> IoT Devices</div>
   <div class="panel-list" id="deviceList"></div>
 </div>
 
 <div class="side-panel panel-right">
-  <div class="panel-header">🔔 实时告警</div>
+  <div class="panel-header"><span class="dot red"></span> Live Alerts</div>
   <div class="panel-list" id="alarmList"></div>
 </div>
 
-<div class="hint">🖱 拖拽旋转 · 滚轮缩放 · 右键平移 · 点击设备聚焦</div>
+<div class="hint">🖱 Drag to rotate &nbsp;·&nbsp; Scroll to zoom &nbsp;·&nbsp; Right-drag to pan &nbsp;·&nbsp; Click device to focus</div>
 
 <script type="importmap">
 {
@@ -110,13 +121,13 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 
-// ===== Scene Setup =====
+// ==================== SCENE ====================
 const scene = new THREE.Scene();
-scene.background = new THREE.Color('#eef1f5');
-scene.fog = new THREE.Fog('#eef1f5', 40, 80);
+scene.background = new THREE.Color('#0d1117');
+scene.fog = new THREE.Fog('#0d1117', 35, 80);
 
-const camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 0.5, 200);
-camera.position.set(16, 20, 22);
+const camera = new THREE.PerspectiveCamera(42, window.innerWidth/window.innerHeight, 0.5, 200);
+camera.position.set(18, 22, 28);
 camera.lookAt(0, 0, 0);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -124,6 +135,8 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.1;
 document.body.appendChild(renderer.domElement);
 
 const labelRenderer = new CSS2DRenderer();
@@ -134,55 +147,93 @@ labelRenderer.domElement.style.pointerEvents = 'none';
 document.body.appendChild(labelRenderer.domElement);
 
 const controls = new OrbitControls(camera, renderer.domElement);
-controls.target.set(0, 0, 0);
+controls.target.set(0, 0.5, 0);
 controls.enableDamping = true;
 controls.dampingFactor = 0.08;
-controls.maxPolarAngle = Math.PI/2.1;
+controls.maxPolarAngle = Math.PI/2.2;
 controls.minDistance = 8;
-controls.maxDistance = 50;
+controls.maxDistance = 55;
 controls.update();
 
-// ===== Lighting =====
-scene.add(new THREE.AmbientLight('#ffffff', 1.8));
-const sun = new THREE.DirectionalLight('#ffffff', 3.5);
-sun.position.set(15, 20, 10);
-sun.castShadow = true;
-sun.shadow.mapSize.set(2048, 2048);
-sun.shadow.camera.left = -20; sun.shadow.camera.right = 20;
-sun.shadow.camera.top = 20; sun.shadow.camera.bottom = -20;
-sun.shadow.camera.far = 60;
-sun.shadow.bias = -0.0001;
-scene.add(sun);
-scene.add(new THREE.DirectionalLight('#c8d6ff', 0.8).translateX(-8));
+// ==================== LIGHTING ====================
+scene.add(new THREE.AmbientLight('#334466', 0.8));
 
-// ===== Ground =====
+const moon = new THREE.DirectionalLight('#8899cc', 1.2);
+moon.position.set(-10, 18, 5);
+moon.castShadow = true;
+moon.shadow.mapSize.set(2048, 2048);
+moon.shadow.camera.left = -25; moon.shadow.camera.right = 25;
+moon.shadow.camera.top = 25; moon.shadow.camera.bottom = -25;
+moon.shadow.camera.far = 70;
+moon.shadow.bias = -0.0001;
+scene.add(moon);
+
+// Warm station lights
+const warmLight = new THREE.PointLight('#ffd89b', 15, 30, 1.2);
+warmLight.position.set(0, 4, 0);
+warmLight.castShadow = true;
+warmLight.shadow.mapSize.set(1024, 1024);
+scene.add(warmLight);
+
+// Platform floodlights
+[-8, 0, 8].forEach(x => {
+  const pl = new THREE.PointLight('#e8d5b7', 4, 12, 1.5);
+  pl.position.set(x, 5, -2);
+  scene.add(pl);
+});
+
+// Blue accent under train
+const trackLight = new THREE.PointLight('#4488ff', 3, 6, 2);
+trackLight.position.set(0, 0.15, 6.5);
+scene.add(trackLight);
+
+// ==================== GROUND ====================
 const ground = new THREE.Mesh(
-  new THREE.PlaneGeometry(60, 60),
-  new THREE.MeshStandardMaterial({ color:'#dce0e8', roughness:0.85 })
+  new THREE.PlaneGeometry(70, 70),
+  new THREE.MeshStandardMaterial({ color:'#161b22', roughness:0.9 })
 );
 ground.rotation.x = -Math.PI/2;
 ground.receiveShadow = true;
 scene.add(ground);
 
-// ===== Grid Helper =====
-const grid = new THREE.GridHelper(60, 40, '#d0d4dc', '#d0d4dc');
+// Grid
+const grid = new THREE.GridHelper(70, 50, '#1a2030', '#1a2030');
 grid.position.y = 0.005;
 scene.add(grid);
 
-// ===== Building Platform =====
-const platform = new THREE.Mesh(
-  new THREE.BoxGeometry(16, 0.3, 20),
-  new THREE.MeshStandardMaterial({ color:'#c8ccd4', roughness:0.5 })
+// ==================== STATION BUILDING ====================
+// Main platform (station floor)
+const stationFloor = new THREE.Mesh(
+  new THREE.BoxGeometry(22, 0.4, 18),
+  new THREE.MeshStandardMaterial({ color:'#2a3040', roughness:0.35, metalness:0.15 })
 );
-platform.position.y = 0.15;
-platform.receiveShadow = true; platform.castShadow = true;
-scene.add(platform);
+stationFloor.position.y = 0.2;
+stationFloor.receiveShadow = true; stationFloor.castShadow = true;
+scene.add(stationFloor);
 
-// ===== Walls =====
-function wall(w, h, d, x, y, z, color='#e8eaed') {
+// Floor tile pattern
+for (let x=-10; x<=10; x+=2) {
+  for (let z=-8; z<=8; z+=2) {
+    const tile = new THREE.Mesh(
+      new THREE.PlaneGeometry(1.8, 1.8),
+      new THREE.MeshStandardMaterial({
+        color: Math.random()>0.5?'#2d3548':'#252d3d',
+        roughness:0.4, metalness:0.1
+      })
+    );
+    tile.rotation.x = -Math.PI/2;
+    tile.position.set(x, 0.41, z);
+    tile.receiveShadow = true;
+    scene.add(tile);
+  }
+}
+
+// Helper: wall
+function wall(w, h, d, x, y, z, matOpts={}) {
+  const defaults = { color:'#3a4560', roughness:0.35, metalness:0.2, transparent:false, opacity:1 };
   const m = new THREE.Mesh(
     new THREE.BoxGeometry(w, h, d),
-    new THREE.MeshStandardMaterial({ color, roughness:0.4, metalness:0.05 })
+    new THREE.MeshStandardMaterial({ ...defaults, ...matOpts })
   );
   m.position.set(x, y, z);
   m.castShadow = true; m.receiveShadow = true;
@@ -190,164 +241,269 @@ function wall(w, h, d, x, y, z, color='#e8eaed') {
   return m;
 }
 
-// Outer walls
-wall(16, 2.8, 0.25, 0, 1.4, +10);     // back
-wall(16, 2.8, 0.25, 0, 1.4, -10);     // front
-wall(0.25, 2.8, 20, +8, 1.4, 0);      // right
-wall(0.25, 2.8, 20, -8, 1.4, 0);      // left
+// Main hall walls
+wall(22, 4.5, 0.3, 0, 2.25, +9, { color:'#4a5568' });   // back
+wall(22, 4.5, 0.3, 0, 2.25, -9, { color:'#4a5568' });   // front (openings below)
+wall(0.3, 4.5, 18, +11, 2.25, 0, { color:'#4a5568' });  // right
+wall(0.3, 4.5, 18, -11, 2.25, 0, { color:'#4a5568' });  // left
 
-// Internal partitions
-wall(0.15, 2.6, 9, -3.5, 1.3, +5.5);  // left meeting room divider
-wall(5.5, 2.6, 0.15, -6.25, 1.3, -1); // bottom-left office divider
-wall(7, 2.6, 0.15, 0.5, 1.3, +1);     // center divider
-wall(0.15, 2.6, 8, 3.5, 1.3, -6);     // right office divider
-
-// ===== Floor Texture =====
-const floorMat = new THREE.MeshStandardMaterial({ color:'#f5f6f8', roughness:0.6 });
-const floor = new THREE.Mesh(new THREE.PlaneGeometry(15.6, 19.6), floorMat);
-floor.rotation.x = -Math.PI/2; floor.position.y = 0.31; floor.receiveShadow = true;
-scene.add(floor);
-
-// Zone labels
-const zones = [
-  { name:'开放办公区', x:-4.5, z:-5, w:7.5, d:8, color:'#e8f0fe' },
-  { name:'会议室 A', x:-5.5, z:6.5, w:3.5, d:3, color:'#fce8e6' },
-  { name:'会议室 B', x:-1.5, z:6.5, w:3.5, d:3, color:'#fce8e6' },
-  { name:'茶水间', x:5.5, z:-6, w:3, d:4, color:'#e8f5e9' },
-  { name:'前台', x:0, z:9, w:3, d:1.5, color:'#fff8e1' },
-  { name:'独立办公室', x:5.5, z:6, w:3, d:3.5, color:'#f3e8fd' },
-];
-
-zones.forEach(z => {
-  const mat = new THREE.MeshStandardMaterial({ color:z.color, roughness:0.7, transparent:true, opacity:0.4 });
-  const zoneFloor = new THREE.Mesh(new THREE.PlaneGeometry(z.w, z.d), mat);
-  zoneFloor.rotation.x = -Math.PI/2; zoneFloor.position.set(z.x, 0.32, z.z);
-  zoneFloor.receiveShadow = true;
-  scene.add(zoneFloor);
-
-  const div = document.createElement('div');
-  div.textContent = z.name;
-  div.style.cssText = 'color:#646a73;font-size:11px;font-weight:600;white-space:nowrap;text-align:center;pointer-events:none';
-  const label = new CSS2DObject(div);
-  label.position.set(z.x, 0.35, z.z);
-  scene.add(label);
+// Glass panels (front wall openings)
+[-6, -2, 2, 6].forEach(x => {
+  // Remove wall segment at entrance points (add glass here for visual)
+  const glass = new THREE.Mesh(
+    new THREE.BoxGeometry(2.2, 3.5, 0.05),
+    new THREE.MeshStandardMaterial({ color:'#7799cc', roughness:0.1, metalness:0.4, transparent:true, opacity:0.35 })
+  );
+  glass.position.set(x, 1.8, -8.95);
+  scene.add(glass);
 });
 
-// ===== Device Markers =====
+// ==================== ROOF ====================
+// Curved roof (approximated with segments)
+const roofGroup = new THREE.Group();
+const roofArch = (t) => 1.2 - Math.pow(t*2-1, 2)*1.8;
+for (let z=-9; z<=9; z+=0.6) {
+  const seg = new THREE.Mesh(
+    new THREE.BoxGeometry(22.6, 0.15, 0.6),
+    new THREE.MeshStandardMaterial({ color:'#5a6a80', roughness:0.3, metalness:0.4 })
+  );
+  const tz = (z+9)/18;
+  seg.position.set(0, 4.5 + roofArch(tz), z);
+  seg.castShadow = true; seg.receiveShadow = true;
+  roofGroup.add(seg);
+}
+scene.add(roofGroup);
+
+// Roof edge trim
+wall(22.8, 0.25, 0.5, 0, 4.6, +9.1, { color:'#6b7d95', roughness:0.25, metalness:0.5 });
+wall(22.8, 0.25, 0.5, 0, 4.6, -9.1, { color:'#6b7d95', roughness:0.25, metalness:0.5 });
+
+// Columns
+[-10, -5, 0, 5, 10].forEach(x => {
+  [-7, -3, 1, 5, 7].forEach(z => {
+    const col = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.25, 0.3, 4.2, 16),
+      new THREE.MeshStandardMaterial({ color:'#5a6578', roughness:0.25, metalness:0.5 })
+    );
+    col.position.set(x, 2.3, z);
+    col.castShadow = true; scene.add(col);
+  });
+});
+
+// ==================== PLATFORMS & TRACKS ====================
+// Track beds
+for (let t=-1; t<=1; t++) {
+  const trackZ = 4 + t*2.5;
+  // Gravel bed
+  const bed = new THREE.Mesh(
+    new THREE.BoxGeometry(20, 0.08, 1.2),
+    new THREE.MeshStandardMaterial({ color:'#1a1a1a', roughness:0.9 })
+  );
+  bed.position.set(0, 0.22, trackZ);
+  bed.receiveShadow = true;
+  scene.add(bed);
+
+  // Rails
+  [-0.35, 0.35].forEach(offset => {
+    const rail = new THREE.Mesh(
+      new THREE.BoxGeometry(20, 0.06, 0.06),
+      new THREE.MeshStandardMaterial({ color:'#8899aa', roughness:0.2, metalness:0.8 })
+    );
+    rail.position.set(0, 0.28, trackZ + offset);
+    scene.add(rail);
+  });
+}
+
+// Platforms (between tracks)
+const platformGeom = new THREE.BoxGeometry(20, 0.5, 2);
+const platformMat = new THREE.MeshStandardMaterial({ color:'#3d4555', roughness:0.4, metalness:0.15 });
+[0, 2.5].forEach(offset => {
+  const plat = new THREE.Mesh(platformGeom, platformMat);
+  plat.position.set(0, 0.45, 4 + offset + 1.25);
+  plat.castShadow = true; plat.receiveShadow = true;
+  scene.add(plat);
+
+  // Yellow safety line
+  const line = new THREE.Mesh(
+    new THREE.BoxGeometry(20, 0.01, 0.12),
+    new THREE.MeshStandardMaterial({ color:'#ffcc00', roughness:0.1, emissive:'#ffcc00', emissiveIntensity:0.3 })
+  );
+  line.position.set(0, 0.72, 4 + offset + 0.6);
+  scene.add(line);
+});
+
+// Connecting bridge between platforms
+const bridge = new THREE.Mesh(
+  new THREE.BoxGeometry(2.5, 2.8, 6),
+  new THREE.MeshStandardMaterial({ color:'#5a6578', roughness:0.3, metalness:0.3, transparent:true, opacity:0.4 })
+);
+bridge.position.set(8, 1.8, 6.5);
+bridge.castShadow = true;
+scene.add(bridge);
+
+// ==================== TRAIN ====================
+const trainGroup = new THREE.Group();
+
+// Engine
+const engine = new THREE.Mesh(
+  new THREE.BoxGeometry(3, 1.4, 1.6),
+  new THREE.MeshStandardMaterial({ color:'#e8eaed', roughness:0.2, metalness:0.5 })
+);
+engine.position.set(0, 0.65, 0);
+engine.castShadow = true;
+trainGroup.add(engine);
+
+// Engine nose
+const nose = new THREE.Mesh(
+  new THREE.CylinderGeometry(0.2, 0.6, 1.2, 16, 1, false, 0, Math.PI),
+  new THREE.MeshStandardMaterial({ color:'#cc3333', roughness:0.15, metalness:0.6 })
+);
+nose.rotation.z = -Math.PI/2;
+nose.rotation.y = Math.PI/2;
+nose.position.set(1.7, 0.65, 0);
+trainGroup.add(nose);
+
+// Windshield
+const windshield = new THREE.Mesh(
+  new THREE.PlaneGeometry(0.8, 0.4),
+  new THREE.MeshStandardMaterial({ color:'#88bbee', roughness:0.05, metalness:0.3, emissive:'#2266aa', emissiveIntensity:0.4 })
+);
+windshield.position.set(2.05, 1.0, 0);
+trainGroup.add(windshield);
+
+// Headlights
+[-0.3, 0.3].forEach(offset => {
+  const light = new THREE.Mesh(
+    new THREE.SphereGeometry(0.08, 8, 8),
+    new THREE.MeshStandardMaterial({ color:'#ffeedd', roughness:0.1, emissive:'#ffcc88', emissiveIntensity:1.5 })
+  );
+  light.position.set(2.1, 0.65, offset);
+  trainGroup.add(light);
+});
+
+// Carriages
+for (let c=0; c<3; c++) {
+  const car = new THREE.Mesh(
+    new THREE.BoxGeometry(3.5, 1.3, 1.5),
+    new THREE.MeshStandardMaterial({ color:'#d8dce4', roughness:0.25, metalness:0.4 })
+  );
+  car.position.set(-2.5 - c*3.7, 0.6, 0);
+  car.castShadow = true;
+  trainGroup.add(car);
+
+  // Windows
+  for (let w=-1; w<=1; w+=2) {
+    const win = new THREE.Mesh(
+      new THREE.PlaneGeometry(1.2, 0.5),
+      new THREE.MeshStandardMaterial({ color:'#99bbdd', roughness:0.05, emissive:'#334466', emissiveIntensity:0.3 })
+    );
+    win.position.set(-2.5 - c*3.7, 0.9, w*0.4);
+    trainGroup.add(win);
+  }
+}
+
+trainGroup.position.set(-5.5, 0.55, 5.25);
+// Rotate train to face along track
+scene.add(trainGroup);
+
+// ==================== DEVICE MARKERS ====================
 const devices = [
-  { id:'d1', name:'温湿度传感器-A1', zone:'开放办公区', x:-6, z:-7, color:'#34a853', status:'ok', type:'sensor' },
-  { id:'d2', name:'温湿度传感器-A2', zone:'开放办公区', x:-2, z:-3, color:'#34a853', status:'ok', type:'sensor' },
-  { id:'d3', name:'人体感应器-B1', zone:'会议室 A', x:-5.5, z:5.5, color:'#fbbc04', status:'warn', type:'motion' },
-  { id:'d4', name:'空气质量监测-C1', zone:'茶水间', x:6, z:-7, color:'#34a853', status:'ok', type:'air' },
-  { id:'d5', name:'智能灯光-D1', zone:'前台', x:-1, z:9.2, color:'#34a853', status:'ok', type:'light' },
-  { id:'d6', name:'智能灯光-D2', zone:'独立办公室', x:6, z:5, color:'#ea4335', status:'off', type:'light' },
-  { id:'d7', name:'温湿度传感器-A3', zone:'开放办公区', x:-7, z:-1.5, color:'#34a853', status:'ok', type:'sensor' },
-  { id:'d8', name:'人体感应器-B2', zone:'会议室 B', x:-1.5, z:5.5, color:'#34a853', status:'ok', type:'motion' },
+  { id:'d1', name:'Passenger Counter A', loc:'Platform 1', x:-8, z:5, color:'#34a853', status:'ok', type:'counter' },
+  { id:'d2', name:'Passenger Counter B', loc:'Platform 2', x:0, z:7.8, color:'#fbbc04', status:'warn', type:'counter' },
+  { id:'d3', name:'Security Camera C1', loc:'Main Hall', x:-5, z:-5, color:'#34a853', status:'ok', type:'camera' },
+  { id:'d4', name:'Security Camera C2', loc:'Entrance', x:5, z:-8.2, color:'#34a853', status:'ok', type:'camera' },
+  { id:'d5', name:'Info Display D1', loc:'Platform 1', x:3, z:5.3, color:'#34a853', status:'ok', type:'display' },
+  { id:'d6', name:'Info Display D2', loc:'Platform 2', x:-3, z:7.5, color:'#ea4335', status:'alert', type:'display' },
+  { id:'d7', name:'Temp Sensor T1', loc:'Waiting Area', x:7, z:-3, color:'#34a853', status:'ok', type:'sensor' },
+  { id:'d8', name:'Crowd Density S1', loc:'Main Hall', x:0, z:3, color:'#fbbc04', status:'warn', type:'crowd' },
+  { id:'d9', name:'Security Camera C3', loc:'Bridge', x:8.5, z:7, color:'#34a853', status:'ok', type:'camera' },
+  { id:'d10', name:'Gate Scanner G1', loc:'Entrance', x:7, z:-8.2, color:'#34a853', status:'ok', type:'gate' },
 ];
 
 const deviceMeshes = [];
-const rings = [];
+const allRings = [];
 
 devices.forEach(d => {
   const group = new THREE.Group();
 
-  // Base sphere
-  const geo = new THREE.SphereGeometry(0.22, 32, 32);
-  const mat = new THREE.MeshStandardMaterial({ color:d.color, roughness:0.25, metalness:0.15, emissive:d.color, emissiveIntensity:0.3 });
-  const sphere = new THREE.Mesh(geo, mat);
+  // Glow sphere
+  const glowGeo = new THREE.SphereGeometry(0.3, 32, 32);
+  const glowMat = new THREE.MeshStandardMaterial({
+    color:d.color, roughness:0.1, metalness:0.1,
+    emissive:d.color,
+    emissiveIntensity:d.status==='alert'?1.2:d.status==='warn'?0.7:0.4
+  });
+  const sphere = new THREE.Mesh(glowGeo, glowMat);
   sphere.castShadow = true;
   group.add(sphere);
 
-  // Pulse ring
-  const ringGeo = new THREE.TorusGeometry(0.32, 0.04, 16, 32);
-  const ringMat = new THREE.MeshStandardMaterial({ color:d.color, roughness:0.3, emissive:d.color, emissiveIntensity:0.5, transparent:true, opacity:0.7 });
+  // Outer ring
+  const ringGeo = new THREE.TorusGeometry(0.42, 0.05, 16, 32);
+  const ringMat = new THREE.MeshStandardMaterial({
+    color:d.color, roughness:0.15, emissive:d.color,
+    emissiveIntensity:0.6, transparent:true, opacity:0.7
+  });
   const ring = new THREE.Mesh(ringGeo, ringMat);
   ring.rotation.x = Math.PI/2;
-  ring.userData = { baseY: d.status==='off'?0.25:3.0, speed: 0.4 + Math.random()*0.3, phase: Math.random()*Math.PI*2 };
+  ring.userData = { speed:0.35 + Math.random()*0.4, phase:Math.random()*Math.PI*2 };
   group.add(ring);
-  rings.push(ring);
+  allRings.push(ring);
 
-  group.position.set(d.x, 0.46, d.z);
+  // Vertical beam (for cameras)
+  if (d.type==='camera') {
+    const pole = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.03, 0.03, 1.5, 8),
+      new THREE.MeshStandardMaterial({ color:'#8899aa', roughness:0.3, metalness:0.6 })
+    );
+    pole.position.y = 0.15;
+    group.add(pole);
+  }
+
+  group.position.set(d.x, d.type==='camera'?0.95:0.48, d.z);
   scene.add(group);
   d.group = group;
 
   // CSS Label
   const div = document.createElement('div');
-  div.innerHTML = `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${d.color};margin-right:4px;vertical-align:middle"></span>${d.name}`;
-  div.style.cssText = `color:#1a1a2e;font-size:10px;font-weight:500;white-space:nowrap;background:rgba(255,255,255,0.85);padding:3px 8px;border-radius:4px;pointer-events:none`;
+  const statusIcon = d.status==='alert'?'🔴':d.status==='warn'?'🟡':'🟢';
+  div.innerHTML = `<span style="font-size:10px">${statusIcon}</span> <span style="color:#e8eaed;font-size:10px;font-weight:500">${d.name.split(' ').pop()}</span>`;
+  div.style.cssText = 'background:rgba(26,26,46,0.85);padding:3px 7px;border-radius:4px;white-space:nowrap;pointer-events:none;border:1px solid rgba(255,255,255,0.08)';
   const label = new CSS2DObject(div);
-  label.position.set(0, 0.55, 0);
+  label.position.set(0, d.type==='camera'?1.0:0.6, 0);
   group.add(label);
 
   deviceMeshes.push({ device:d, group });
 });
 
-// ===== Furniture (simple) =====
-// Desks in open area
-for (let i=0; i<6; i++) {
-  const deskGroup = new THREE.Group();
-  const desk = new THREE.Mesh(
-    new THREE.BoxGeometry(1.2, 0.05, 0.6),
-    new THREE.MeshStandardMaterial({ color:'#f0f0f0', roughness:0.4 })
-  );
-  desk.position.y = 0.33;
-  desk.castShadow = true; desk.receiveShadow = true;
-  deskGroup.add(desk);
-  deskGroup.position.set(-6 + (i%3)*2.2, 0.31, -6 + Math.floor(i/3)*2.5);
-  scene.add(deskGroup);
-}
+// ==================== ZONE LABELS ====================
+const zones = [
+  { name:'PLATFORM 1', x:-7, z:5.4, color:'#8ab4f8' },
+  { name:'PLATFORM 2', x:0, z:7.8, color:'#8ab4f8' },
+  { name:'WAITING HALL', x:7, z:-2, color:'#c4a574' },
+  { name:'TICKET HALL', x:-7, z:-3, color:'#a4c474' },
+  { name:'ENTRANCE', x:4, z:-8.5, color:'#78c4a4' },
+];
 
-// Meeting tables
-function addTable(x, z) {
-  const t = new THREE.Mesh(
-    new THREE.CylinderGeometry(1.2, 1.2, 0.08, 32),
-    new THREE.MeshStandardMaterial({ color:'#e8eaed', roughness:0.3 })
-  );
-  t.position.set(x, 0.35, z);
-  t.castShadow = true; t.receiveShadow = true;
-  scene.add(t);
-}
-addTable(-5.5, 6.5);
-addTable(-1.5, 6.5);
+zones.forEach(z => {
+  const div = document.createElement('div');
+  div.textContent = z.name;
+  div.style.cssText = `color:${z.color};font-size:10px;font-weight:700;letter-spacing:1px;white-space:nowrap;pointer-events:none;text-shadow:0 0 8px rgba(0,0,0,0.8)`;
+  const label = new CSS2DObject(div);
+  label.position.set(z.x, 0.5, z.z);
+  scene.add(label);
+});
 
-// ===== Raycaster for click =====
-const raycaster = new THREE.Raycaster();
-const mouse = new THREE.Vector2();
-
-function onCanvasClick(e) {
-  mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
-  mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
-  raycaster.setFromCamera(mouse, camera);
-
-  const targets = deviceMeshes.map(d => d.group.children[0]); // spheres
-  const intersects = raycaster.intersectObjects(targets);
-  if (intersects.length > 0) {
-    const obj = intersects[0].object;
-    const found = deviceMeshes.find(d => d.group.children.includes(obj));
-    if (found) focusDevice(found);
-  }
-}
-
-function focusDevice(entry) {
-  const pos = entry.group.position;
-  controls.target.set(pos.x, pos.y, pos.z);
-  controls.update();
-  highlightDevice(entry.device.id);
-}
-
-renderer.domElement.addEventListener('click', onCanvasClick);
-
-// ===== UI Panels =====
+// ==================== UI PANELS ====================
 function renderDeviceList() {
-  const el = document.getElementById('deviceList');
-  el.innerHTML = devices.map(d => `
+  const icons = { counter:'👥', camera:'📹', display:'🖥', sensor:'🌡️', crowd:'📊', gate:'🚪' };
+  document.getElementById('deviceList').innerHTML = devices.map(d => `
     <div class="panel-item" data-id="${d.id}" onclick="window._focusById('${d.id}')">
-      <div class="dev-icon" style="background:${d.color}20">${d.type==='sensor'?'🌡️':d.type==='motion'?'👤':d.type==='air'?'💨':'💡'}</div>
+      <div class="dev-icon" style="background:${d.color}15">${icons[d.type]}</div>
       <div class="dev-info">
         <div class="dev-name">${d.name}</div>
-        <div class="dev-zone">${d.zone}</div>
+        <div class="dev-loc">${d.loc}</div>
       </div>
-      <div class="dev-status ${d.status==='ok'?'status-ok':d.status==='warn'?'status-warn':'status-off'}">${d.status==='ok'?'正常':d.status==='warn'?'注意':'离线'}</div>
+      <div class="dev-badge ${d.status==='ok'?'badge-ok':d.status==='warn'?'badge-warn':'badge-alert'}">${d.status==='ok'?'OK':d.status==='warn'?'WARN':'ALERT'}</div>
     </div>
   `).join('');
 }
@@ -360,33 +516,72 @@ function highlightDevice(id) {
 
 window._focusById = function(id) {
   const entry = deviceMeshes.find(d => d.device.id === id);
-  if (entry) focusDevice(entry);
+  if (entry) {
+    const pos = entry.group.position;
+    controls.target.set(pos.x, pos.y, pos.z);
+    controls.update();
+    highlightDevice(id);
+  }
 };
 
 renderDeviceList();
 
-// Alarm list
+// Alarms
 const alarms = [
-  { time:'10:32', text:'智能灯光-D2 离线超过 30 分钟', level:'high' },
-  { time:'09:15', text:'人体感应器-B1 数据延迟', level:'medium' },
+  { time:'14:32', text:'Info Display D2 — Signal Lost', level:'high' },
+  { time:'14:15', text:'Crowd Density S1 — Above Threshold', level:'medium' },
+  { time:'13:48', text:'Passenger Counter B — Data Lag', level:'medium' },
 ];
 document.getElementById('alarmList').innerHTML = alarms.map(a => `
-  <div class="alarm-item">
-    <span>${a.text}</span>
+  <div class="alarm-row">
+    <span>⚠ ${a.text}</span>
     <span class="alarm-time">${a.time}</span>
   </div>
 `).join('');
 
-// ===== Animation Loop =====
+// ==================== RAYCASTER ====================
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+
+renderer.domElement.addEventListener('click', (e) => {
+  mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+  mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+  raycaster.setFromCamera(mouse, camera);
+
+  const targets = deviceMeshes.map(d => d.group.children[0]);
+  const intersects = raycaster.intersectObjects(targets);
+  if (intersects.length > 0) {
+    const obj = intersects[0].object;
+    const found = deviceMeshes.find(d => d.group.children.includes(obj));
+    if (found) window._focusById(found.device.id);
+  }
+});
+
+// ==================== ANIMATION ====================
 const clock = new THREE.Clock();
+
 function animate() {
   requestAnimationFrame(animate);
   const t = clock.getElapsedTime();
 
-  rings.forEach(ring => {
-    const s = 1 + Math.sin(t * ring.userData.speed + ring.userData.phase) * 0.25;
+  // Pulse rings
+  allRings.forEach(ring => {
+    const s = 1 + Math.sin(t * ring.userData.speed + ring.userData.phase) * 0.3;
     ring.scale.setScalar(s);
-    ring.material.opacity = 0.25 + Math.sin(t * ring.userData.speed + ring.userData.phase) * 0.25;
+    ring.material.opacity = 0.2 + Math.sin(t * ring.userData.speed + ring.userData.phase) * 0.3;
+  });
+
+  // Subtle train idle animation
+  trainGroup.position.x = -5.5 + Math.sin(t * 0.6) * 0.15;
+
+  // Track light subtle flicker
+  trackLight.intensity = 3 + Math.sin(t * 1.7) * 0.3 + Math.sin(t * 3.3) * 0.15;
+
+  // Engine headlight flicker
+  trainGroup.children.forEach(child => {
+    if (child.material?.emissiveIntensity > 1) {
+      child.material.emissiveIntensity = 1.5 + Math.sin(t * 2.1) * 0.2;
+    }
   });
 
   controls.update();
@@ -395,7 +590,7 @@ function animate() {
 }
 animate();
 
-// Resize
+// ==================== RESIZE ====================
 window.addEventListener('resize', () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
